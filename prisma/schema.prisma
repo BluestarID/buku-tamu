@@ -1,0 +1,39 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Resepsionis {
+  id       Int    @id @default(autoincrement())
+  nama     String
+  username String @unique
+  password String
+  tamu     Tamu[]
+}
+
+model Pegawai {
+  id     Int     @id @default(autoincrement())
+  nama   String
+  status Boolean
+  tamu   Tamu[]
+}
+
+model Tamu {
+  id             Int       @id @default(autoincrement())
+  idResepsionis  Int
+  idPegawai      Int
+  nama           String
+  asalInstansi   String
+  keperluan      String
+  waktuDatang    DateTime?
+  waktuKeluar    DateTime?
+  jadwalWaktu    DateTime?
+  createdAt      DateTime  @default(now())
+
+  resepsionis    Resepsionis @relation(fields: [idResepsionis], references: [id])
+  pegawai        Pegawai     @relation(fields: [idPegawai], references: [id])
+}
