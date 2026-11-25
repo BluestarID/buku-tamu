@@ -9,6 +9,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   providers: [
     CredentialsProvider({
@@ -18,32 +19,37 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
+        try {
+          if (!credentials?.username || !credentials?.password) {
+            return null;
+          }
+
+          const user = await prisma.resepsionis.findUnique({
+            where: { username: credentials.username },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id.toString(),
+            name: user.nama,
+            username: user.username,
+          };
+        } catch (error) {
+          console.error("NextAuth authorize error (check DB connection / prisma):", error);
           return null;
         }
-
-        const user = await prisma.resepsionis.findUnique({
-          where: { username: credentials.username },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: user.id.toString(),
-          name: user.nama,
-          username: user.username,
-        };
       },
     }),
   ],
