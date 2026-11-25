@@ -29,15 +29,25 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user) {
+            console.log(`[AUTH] User not found in database: "${credentials.username}"`);
             return null;
           }
 
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          );
+          // Support both bcrypt hashed password and direct plain text password
+          let isPasswordValid = credentials.password === user.password;
+          if (!isPasswordValid) {
+            try {
+              isPasswordValid = await bcrypt.compare(
+                credentials.password,
+                user.password
+              );
+            } catch {
+              isPasswordValid = false;
+            }
+          }
 
           if (!isPasswordValid) {
+            console.log(`[AUTH] Invalid password for user: ${credentials.username}`);
             return null;
           }
 
